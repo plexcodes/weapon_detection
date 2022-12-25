@@ -9,7 +9,6 @@ class detectionWindow(QMainWindow):
         super(detectionWindow, self).__init__()
         loadUi('ui/detection_window.ui', self)
         self.stop_detection.clicked.connect(self.close)
-        self.show()
 
     def detection_instance(self):
         self.detection = Detection()

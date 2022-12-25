@@ -3,7 +3,10 @@ from detectionWindow import detectionWindow
 import sys
 
 app = QApplication(sys.argv)
-mainwindow = detectionWindow()
+mainWindow = detectionWindow()
+
+mainWindow.detection_instance()
+mainWindow.start_detection()
 
 try:
     sys.exit(app.exec_())
