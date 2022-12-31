@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
-from weaponRecognition.detection import Detection
+from breachRecognition.breachDetection import Detection
 class detectionWindow(QMainWindow):
     def __init__(self):
         super(detectionWindow, self).__init__()
