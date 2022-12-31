@@ -3,8 +3,10 @@ from PyQt5.QtGui import QImage
 import cv2
 import numpy as np
 import time
+from datetime import datetime
+from telegramAlerts.sendMessage import sendAlert, sendFrame
 
-# Handles the YOLOv4 detection algorithm & saves detected frames
+# Handles the YOLOv4 detection algorithm & saves detected savedFrames
 class Detection(QThread):
     def __init__(self):
         super(Detection, self).__init__()
@@ -15,16 +17,17 @@ class Detection(QThread):
     def run(self):
 
         # Loads YoloV4
-        net = cv2.dnn.readNet("weights/yolov4.weights", "cfg/yolov4.cfg")
+        net = cv2.dnn.readNet("./yolov4Weights/yolov4.weights", "cfgFiles/yolov4-obj.cfg")
         classes = []
 
         # Loads object names
-        with open("obj.names", "r") as f:
+        with open("./cfgFiles/obj.names", "r") as f:
             classes = [line.strip() for line in f.readlines()]
 
         layer_names = net.getLayerNames()
         output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
         colors = np.random.uniform(0, 255, size=(len(classes), 3))
+        detected_weapon = ""
 
         font = cv2.FONT_HERSHEY_PLAIN
         starting_time = time.time() - 11
@@ -58,11 +61,10 @@ class Detection(QThread):
                         scores = detection[5:]
                         class_id = np.argmax(scores)
                         confidence = scores[class_id]
-                        print(scores[class_id])
-
                         # Confidence Threshold (0.99 = 99%)
 
                         if confidence > 0.05:
+                            print("Weapon ID in Sight: " + str(class_id) + " | Confidence: " + str(int(confidence * 100)) + "%")
                             # Calculating coordinates
                             center_x = int(detection[0] * width)
                             center_y = int(detection[1] * height)
@@ -89,14 +91,15 @@ class Detection(QThread):
                         color = (256, 0, 0)
                         cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
                         cv2.putText(frame, label + " {0:.1%}".format(confidence), (x, y - 20), font, 3, color, 3)
-
+                        print(label)
+                        detected_weapon = label
                         elapsed_time = starting_time - time.time()
 
                         # Take a screenshot every 10 seconds when an object is in range
 
-                        if elapsed_time <= -10:
+                        if elapsed_time <= -2:
                             starting_time = time.time()
-                            self.saveDetection(frame)
+                            self.saveDetection(frame, detected_weapon)
 
                 # Apply settings
 
@@ -106,7 +109,15 @@ class Detection(QThread):
                 p = convertToQtFormat.scaled(854, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
-    # Saves detected frame as a .jpg within the "frames" folder
-    def saveDetection(self, frame):
-        cv2.imwrite("frames/frame.jpg", frame)
-        print('Frame Saved')
+    # Saves detected frame as a .jpg within the "savedFrames" folder
+    def saveDetection(self, frame, spottedWeapon):
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        frame_address = "savedFrames/spotted-weapon-" + current_time + ".jpg"
+        cv2.imwrite(frame_address, frame)
+        print('Frame Saved, Sending Message')
+        sendAlert("WARNING! Weapon Detected at " + current_time)
+        sendAlert("Spotted Weapon Type: '" + spottedWeapon + "'")
+        sendAlert("Camera Location: Hallway 1")
+        sendAlert("SEE IMAGE BELOW, PROCEED WITH EXTREME CAUTION!")
+        sendFrame(frame_address)

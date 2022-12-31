@@ -2,12 +2,11 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.uic import loadUi
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
-from detection import Detection
-
+from weaponRecognition.detection import Detection
 class detectionWindow(QMainWindow):
     def __init__(self):
         super(detectionWindow, self).__init__()
-        loadUi('ui/detection_window.ui', self)
+        loadUi('uiLibrary/detection_window.ui', self)
         self.stop_detection.clicked.connect(self.close)
 
     def detection_instance(self):
