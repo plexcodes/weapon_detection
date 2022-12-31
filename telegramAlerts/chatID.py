@@ -2,7 +2,7 @@
 import requests
 
 #SENSITIVE INFORMATION
-TOKEN = "5484992589:AAFtcv10WpMIxBtTQ7sObYWvWZhcZsL6xXg"
+TOKEN = ""
 
 url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 print(requests.get(url).json())

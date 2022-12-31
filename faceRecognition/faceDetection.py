@@ -15,15 +15,15 @@ import numpy as np
 video_capture = cv2.VideoCapture(0)
 
 # Load a sample picture and learn how to recognize it.
-obama_image = face_recognition.load_image_file("mihail.jpeg")
-obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
+person_image = face_recognition.load_image_file("./faceRecognition/mihail.jpeg")
+person_face_encoding = face_recognition.face_encodings(person_image)[0]
 
 # Create arrays of known face encodings and their names
 known_face_encodings = [
-    obama_face_encoding,
+    person_face_encoding,
 ]
 known_face_names = [
-    "Barack Obama"
+    "individual"
 ]
 
 # Initialize some variables

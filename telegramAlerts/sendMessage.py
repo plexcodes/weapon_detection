@@ -1,8 +1,8 @@
 import requests
 
 #SENSITIVE INFORMATION
-TOKEN = "5484992589:AAFtcv10WpMIxBtTQ7sObYWvWZhcZsL6xXg"
-chat_id = "5103722545"
+TOKEN = ""
+chat_id = ""
 
 def sendAlert(message):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
