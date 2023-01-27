@@ -39,7 +39,7 @@ class Detection(QThread):
         self.running = True
 
         # Initialize camera
-        cap = cv2.VideoCapture(2)
+        cap = cv2.VideoCapture(0)
 
         # Loads a sample picture and learns how to recognize it.
         person_image = face_recognition.load_image_file("./faceRecognition/npc.jpeg")
@@ -64,11 +64,11 @@ class Detection(QThread):
 
             ret, frame = cap.read()
 
-            if process_this_frame:
-                small_frame = cv2.resize(frame, (0, 0), fx=1.00, fy=1.00)
+            if ret:
+                height, width, channels = frame.shape
 
                 # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-                rgb_small_frame = small_frame[:, :, ::-1]
+                rgb_small_frame = frame[:, :, ::-1]
 
                 # Search for all the faces and face encodings in the current frame
                 face_locations = face_recognition.face_locations(rgb_small_frame)
@@ -90,17 +90,8 @@ class Detection(QThread):
                         # Take a screenshot every 10 seconds when an unknown individual is in range
                         if elapsed_time <= -10:
                             starting_time = time.time()
-                            self.intruderFrame(frame)
-
-                    face_names.append(name)
-
-            process_this_frame = not process_this_frame
-
-            # Weapon Detection starts here.
-
-            if ret:
-                height, width, channels = frame.shape
-
+                            # self.intruderFrame(frame)
+                            face_names.append(name)
                 # Running the detection model
 
                 blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
@@ -120,7 +111,7 @@ class Detection(QThread):
                         confidence = scores[class_id]
                         # Confidence Threshold (0.99 = 99%)
 
-                        if confidence > 0.05:
+                        if confidence > 0.5:
                             print("Weapon ID in Sight: " + str(class_id) + " | Confidence: " + str(int(confidence * 100)) + "%")
                             # Calculating coordinates
                             center_x = int(detection[0] * width)
@@ -154,17 +145,11 @@ class Detection(QThread):
                         elapsed_time = starting_time - time.time()
 
                         # Take a screenshot and send an alert on Telegram every 2 seconds when an object is in range.
-
                         if elapsed_time <= -2:
                             starting_time = time.time()
-                            self.weaponFrame(frame, detected_weapon, spotted_individual)
+                            # self.weaponFrame(frame, detected_weapon, spotted_individual)
 
                 for (top, right, bottom, left), name in zip(face_locations, face_names):
-                    top *= 1
-                    right *= 1
-                    bottom *= 1
-                    left *= 1
-
                     # Draw a box around the face
                     cv2.rectangle(frame, (left, top), (right, bottom), (34, 139, 34), 2)
 

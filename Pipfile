@@ -6,8 +6,9 @@ name = "pypi"
 [packages]
 requests = "*"
 numpy = "*"
-pyqt5 = "*"
+pyqt5 = "==5.15.7"
 opencv-python-headless = "*"
+face-recognition = "*"
 
 [dev-packages]
 
