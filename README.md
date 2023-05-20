@@ -1,7 +1,59 @@
+# IDENTIFICAREA AMENINȚĂRILOR IMINENTE FOLOSIND INTELIGENȚA ARTIFICIALĂ
+
+Instructiuni de instalare:
+
+1. Copierea fisierelor local:
+
+```bash
+  cd your_dir
+  git clone https://github.com/plexcodes/weapon_detection_system.git -b master
+```
+2. Instalarea dependentelor si crearea unui mediu virtual PipEnv:
+
+```bash
+  cd weapon_detection_system
+  pipenv install --python 3.8
+  pipenv shell
+  pipenv install requests numpy pyqt5 opencv-python-headless face_recognition
+```
+
+3. Copierea fisierelor YOLOv4 sub numele "yolov4.weights" din link-ul de Google Drive atasat mai jos in folderul /yolov4Weights/.
+
+4. (Optional) Introducerea cheilor API Telegram pentru testarea alertelor in timp real in fisierul /telegramAlerts/sendMessage.py.
+
+5. (Optional) Introducerea imaginilor pentru recunoastere faciala in folderul /faceRecognition/ si inregistrarea lor in scriptul /breachDetection/breachDetection.py
+
+5. Rularea sistemului:
+
+```bash
+  python3 main.py
+```
+
+Dependente utilizate:
+- requests (Pentru API Requests)
+- pyqt5 5.15.7 (Pentru Interfata Grafica)
+- opencv-python-headless (Pentru Procesarea Cadrelor)
+- numpy (Pentru Calcule)
+- face_recognition (Pentru Recunoastere Faciala)
+
+Instrumente utilizate:
+- Jetbrains PyCharm Professional (Pentru Editare Cod)
+- Google Collaboratory (Pentru Antrenarea Modelului AI)
+- Google Drive (Pentru Google Collaboratory)
+- Github (Versionare Cod)
+- Git
+- Python 3
+- LabelImg (Pentru Etichetarea Imaginilor din Dataset)
+- Darknet (Arhitectura Pentru Antrenarea AI)
+- YOLOv4 (Algoritm Pentru Detectarea Obiectelor)
+
+Link Notebook Google Collaboratory: https://colab.research.google.com/drive/1PRWqJExSRWzQLW5aaaL3UsafkjuYEoDA?usp=sharing#scrollTo=BZjRqnuOdvXe
+Link Dataset: https://drive.google.com/drive/folders/1jDKhHkOc_CzEB-WeFfKqfvXYIdWxiZZk?usp=share_link
+Link Fisiere YOLOv4: https://drive.google.com/drive/folders/1bi7aRlD_Pngy-Y2LAtw2_EI_3puLUj-f?usp=share_link
 
 # Security Breach Detection System using AI (YOLOV4 + dlib)
 
-Repository containing multiple Python scripts meant to prove that AI can be used in protecting and saving lives as per my research paper for the MIICA 2023 Malaysian science contest.
+Repository containing multiple Python scripts meant to prove that AI can be used in protecting and saving lives as per my research paper.
 
 Dependencies:
 - requests
