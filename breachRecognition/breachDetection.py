@@ -6,10 +6,12 @@ import time
 from datetime import datetime
 from telegramAlerts.sendMessage import sendAlert, sendFrame
 import face_recognition
+import threading
 
-# ~ handles the YOLOv4 detection algorythm,
+# ~ handles the YOLOv4 detection algorithm,
 # ~ sends alerts via Telegram API
 # ~ saves frames with 'intruders' & weapons in sight in directory ./savedFrames
+detection_time = time.time() - 11
 
 class Detection(QThread):
     def __init__(self):
@@ -29,12 +31,7 @@ class Detection(QThread):
 
         layer_names = net.getLayerNames()
         output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-        colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
-        detected_weapon = ""
-        spotted_individual = "Unknown | Possibly Masked"
-
-        font = cv2.FONT_HERSHEY_PLAIN
         starting_time = time.time() - 11
         self.running = True
 
@@ -54,17 +51,84 @@ class Detection(QThread):
         ]
 
         face_locations = []
-        face_encodings = []
         face_names = []
-        process_this_frame = True
+
+
+        def detection_model():
+            global detection_time
+            blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+            net.setInput(blob)
+            outs = net.forward(output_layers)
+
+            # Evaluating detections
+
+            class_ids = []
+            confidences = []
+            boxes = []
+
+            for out in outs:
+                for detection in out:
+                    scores = detection[5:]
+                    class_id = np.argmax(scores)
+                    confidence = scores[class_id]
+                    # Confidence Threshold (0.99 = 99%)
+
+                    if confidence > 0.10:
+                        print("Weapon ID in Sight: " + str(class_id) + " | Confidence: " + str(
+                            int(confidence * 100)) + "%")
+                        # Calculating coordinates
+                        center_x = int(detection[0] * width)
+                        center_y = int(detection[1] * height)
+                        w = int(detection[2] * width)
+                        h = int(detection[3] * height)
+
+                        # Rectangle coordinates
+                        x = int(center_x - w / 2)
+                        y = int(center_y - h / 2)
+
+                        boxes.append([x, y, w, h])
+                        confidences.append(float(confidence))
+                        class_ids.append(class_id)
+
+            indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.3)
+
+            # Draw boxes around detected objects
+
+            for i in range(len(boxes)):
+                if i in indexes:
+                    x, y, w, h = boxes[i]
+                    label = str(classes[class_ids[i]])
+                    confidence = confidences[i]
+                    color = (255, 0, 255)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+                    cv2.putText(frame, label + " {0:.1%}".format(confidence), (x, y - 20), cv2.FONT_HERSHEY_DUPLEX, 3, color, 3)
+                    print(label)
+
+                    elapsed_time = detection_time - time.time()
+
+                    # Take a screenshot and send an alert on Telegram every 2 seconds when an object is in range.
+                    if elapsed_time <= -2:
+                        detection_time = time.time()
+                        # self.weaponFrame(frame, detected_weapon, spotted_individual)
+
+            for (top, right, bottom, left), name in zip(face_locations, face_names):
+                # Draw a box around the face
+                cv2.rectangle(frame, (left, top), (right, bottom), (34, 139, 34), 2)
+
+                # Draw a label with a name below the face
+                cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (34, 139, 34), cv2.FILLED)
+                font = cv2.FONT_HERSHEY_DUPLEX
+                cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
         # Detection while loop
         while self.running:
-            spotted_individual = "Unknown | Possibly Masked"
 
             ret, frame = cap.read()
 
             if ret:
+                t1 = threading.Thread(target=detection_model())
+                t1.start()
+
                 height, width, channels = frame.shape
 
                 # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
@@ -92,71 +156,11 @@ class Detection(QThread):
                             starting_time = time.time()
                             # self.intruderFrame(frame)
                             face_names.append(name)
+
                 # Running the detection model
 
-                blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-                net.setInput(blob)
-                outs = net.forward(output_layers)
 
-                # Evaluating detections
-
-                class_ids = []
-                confidences = []
-                boxes = []
-
-                for out in outs:
-                    for detection in out:
-                        scores = detection[5:]
-                        class_id = np.argmax(scores)
-                        confidence = scores[class_id]
-                        # Confidence Threshold (0.99 = 99%)
-
-                        if confidence > 0.5:
-                            print("Weapon ID in Sight: " + str(class_id) + " | Confidence: " + str(int(confidence * 100)) + "%")
-                            # Calculating coordinates
-                            center_x = int(detection[0] * width)
-                            center_y = int(detection[1] * height)
-                            w = int(detection[2] * width)
-                            h = int(detection[3] * height)
-
-                            # Rectangle coordinates
-                            x = int(center_x - w / 2)
-                            y = int(center_y - h / 2)
-
-                            boxes.append([x, y, w, h])
-                            confidences.append(float(confidence))
-                            class_ids.append(class_id)
-
-                indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.3)
-
-                # Draw boxes around detected objects
-
-                for i in range(len(boxes)):
-                    if i in indexes:
-                        x, y, w, h = boxes[i]
-                        label = str(classes[class_ids[i]])
-                        confidence = confidences[i]
-                        color = (255, 0, 255)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-                        cv2.putText(frame, label + " {0:.1%}".format(confidence), (x, y - 20), font, 3, color, 3)
-                        print(label)
-                        detected_weapon = label
-
-                        elapsed_time = starting_time - time.time()
-
-                        # Take a screenshot and send an alert on Telegram every 2 seconds when an object is in range.
-                        if elapsed_time <= -2:
-                            starting_time = time.time()
-                            # self.weaponFrame(frame, detected_weapon, spotted_individual)
-
-                for (top, right, bottom, left), name in zip(face_locations, face_names):
-                    # Draw a box around the face
-                    cv2.rectangle(frame, (left, top), (right, bottom), (34, 139, 34), 2)
-
-                    # Draw a label with a name below the face
-                    cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (34, 139, 34), cv2.FILLED)
-                    font = cv2.FONT_HERSHEY_DUPLEX
-                    cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+                t1.join()
 
                 # Apply settings
                 rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
